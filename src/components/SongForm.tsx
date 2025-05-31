@@ -28,6 +28,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Music, Save } from "lucide-react";
 
 // Updated schema: chords is now a single string
 const songFormSchema = z.object({
@@ -70,6 +71,7 @@ export default function SongForm({ isOpen, onClose, initialData, onSubmit }: Son
   const handleSubmit = async (data: SongFormValues) => {
     try {
       await onSubmit(data, initialData?.id);
+      form.reset();
       onClose();
     } catch (e) {
       console.error("Error handling form submit: ", e);
@@ -78,60 +80,73 @@ export default function SongForm({ isOpen, onClose, initialData, onSubmit }: Son
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="sm:max-w-lg md:max-w-xl bg-card border-border text-card-foreground">
+    <Dialog open={isOpen} onOpenChange={onClose}>
+      <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
-          <DialogTitle className="text-primary pb-2">
+          <DialogTitle className="flex items-center gap-2">
+            <Music className="h-5 w-5" />
             {initialData ? "Edit Song" : "Add New Song"}
           </DialogTitle>
-          <DialogDescription className="text-muted-foreground">
-            {initialData ? "Update the details of your song." : "Fill in the details for the new song."}
+          <DialogDescription>
+            {initialData 
+              ? "Update the details of your song below." 
+              : "Fill in the details for your new song below."}
           </DialogDescription>
         </DialogHeader>
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(handleSubmit)} className="flex flex-col h-full">
-            <ScrollArea className="max-h-[60vh] pr-6">
-              <div className="space-y-6 py-4">
-                <FormField
-                  control={form.control}
-                  name="title"
-                  render={({ field }) => (
-                    <FormItem className="space-y-2">
-                      <FormLabel className="text-primary">Title</FormLabel>
-                      <FormControl>
-                        <Input placeholder="Enter song title" {...field} className="bg-input text-foreground border-border focus:ring-ring" />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                    )} />
-
-                <FormField
-                  control={form.control}
-                  name="chords"
-                  render={({ field }) => (
-                    <FormItem className="space-y-2">
-                      <FormLabel className="text-primary">Chords</FormLabel>
-                      <FormControl>
-                        <Textarea
-                          placeholder="Enter all song chords here..."
-                          rows={10} // Adjusted rows for a single chord block
-                          {...field} className="bg-input text-foreground border-border focus:ring-ring font-mono"
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
-            </ScrollArea>
-            <DialogFooter className="pt-4">
-              <Button type="button" variant="outline" onClick={onClose} className="border-primary text-primary hover:bg-primary/10">
+          <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
+            <FormField
+              control={form.control}
+              name="title"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Song Title</FormLabel>
+                  <FormControl>
+                    <Input 
+                      placeholder="Enter song title..." 
+                      {...field}
+                      className="transition-all duration-200 focus-visible:ring-primary"
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="chords"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Chords</FormLabel>
+                  <FormControl>
+                    <Textarea
+                      placeholder="Enter song chords..."
+                      className="font-mono min-h-[200px] resize-y transition-all duration-200 focus-visible:ring-primary"
+                      {...field}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <div className="flex justify-end gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={onClose}
+                className="transition-colors hover:bg-destructive/10 hover:text-destructive"
+              >
                 Cancel
               </Button>
-              <Button type="submit" className="bg-primary text-primary-foreground hover:bg-primary/90">
-                {initialData ? "Save Changes" : "Add Song"}
+              <Button
+                type="submit"
+                className="gap-2 transition-all duration-200 hover:bg-primary/90"
+                disabled={form.formState.isSubmitting}
+              >
+                <Save className="h-4 w-4" />
+                {form.formState.isSubmitting ? "Saving..." : "Save"}
               </Button>
-            </DialogFooter>
+            </div>
           </form>
         </Form>
       </DialogContent>

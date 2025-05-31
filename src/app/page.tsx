@@ -18,9 +18,10 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { ChevronLeft, ChevronRight, PlusCircle, Edit3, Trash2, Music2, Search as SearchIcon, X as ClearSearchIcon, FileQuestion } from 'lucide-react';
+import { ChevronLeft, ChevronRight, PlusCircle, Edit3, Trash2, Music2, Search as SearchIcon, X as ClearSearchIcon, FileQuestion, Plus } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { ThemeToggle } from '@/components/ThemeToggle';
 
 // Import Firestore functions for adding, updating, and deleting
 import { collection, addDoc, updateDoc, deleteDoc, doc } from "firebase/firestore";
@@ -175,15 +176,21 @@ export default function HomePage() {
 
   return (
     <div className="flex flex-col min-h-screen bg-background text-foreground items-center pt-6 pb-24 sm:pb-6 px-2 sm:px-4">
-      <header className="w-full max-w-2xl mx-auto mb-6 flex justify-between items-center">
-        <h1 className="text-4xl font-bold text-primary flex items-center">
-          <Music2 className="h-10 w-10 mr-3 text-primary" />
-          ChordFlash
-        </h1>
-        <Button onClick={handleAddSong} variant="default" size="lg" className="shadow-md">
-          <PlusCircle className="mr-2 h-5 w-5" /> Add Song
-        </Button>
-      </header>
+      <div className="container mx-auto p-4 relative">
+        <div className="flex justify-between items-center mb-8">
+          <div className="flex items-center gap-2">
+            <Music2 className="h-8 w-8 text-primary" />
+            <h1 className="text-3xl font-bold">ChordFlash</h1>
+          </div>
+          <div className="flex items-center gap-4">
+            <ThemeToggle />
+            <Button onClick={() => setIsFormOpen(true)} className="gap-2">
+              <Plus className="h-4 w-4" />
+              Add Song
+            </Button>
+          </div>
+        </div>
+      </div>
 
       {songs.length > 0 && (
         <div className="w-full max-w-2xl mx-auto mb-4 px-2 sm:px-0">
@@ -286,16 +293,16 @@ export default function HomePage() {
       <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
         <AlertDialogContent className="bg-card border-border">
           <AlertDialogHeader>
-            <AlertDialogTitle className="text-primary">Are you sure?</AlertDialogTitle>
+            <AlertDialogTitle className="text-primary">¿Estás seguro?</AlertDialogTitle>
             <AlertDialogDescription className="text-card-foreground">
-              This action cannot be undone. This will permanently delete the song
+              Esta acción no se puede deshacer. Se eliminará permanentemente la canción
               "{songToDelete?.title}".
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel className="border-primary text-primary hover:bg-primary/10">Cancel</AlertDialogCancel>
+            <AlertDialogCancel className="border-primary text-primary hover:bg-primary/10">Cancelar</AlertDialogCancel>
             <AlertDialogAction onClick={confirmDeleteSong} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
-              Delete
+              Eliminar
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

@@ -1,41 +1,57 @@
-
-import type { Song } from '@/types'; // Song type now has chords as string
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Song } from "@/types"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "./ui/card"
+import { Music2, Pencil, Trash2 } from "lucide-react"
+import { Button } from "./ui/button"
 
 interface SongCardProps {
-  song: Song | null;
+  song: Song
+  onEdit?: (song: Song) => void
+  onDelete?: (song: Song) => void
 }
 
-export default function SongCard({ song }: SongCardProps) {
-  if (!song) {
-    return (
-      <Card className="w-full max-w-2xl mx-auto shadow-xl">
-        <CardHeader>
-          <CardTitle className="text-center text-2xl">No songs available</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <p className="text-center text-muted-foreground">Add a song to get started.</p>
-        </CardContent>
-      </Card>
-    );
-  }
-
+export default function SongCard({ song, onEdit, onDelete }: SongCardProps) {
   return (
-    <Card className="w-full max-w-2xl mx-auto shadow-xl bg-card text-card-foreground border-2 border-border rounded-xl overflow-hidden">
-      <CardHeader className="bg-primary/10 p-4 sm:p-6">
-        <CardTitle className="text-center text-3xl sm:text-4xl font-bold text-primary break-words">
-          {song.title}
-        </CardTitle>
+    <Card className="group relative overflow-hidden transition-all duration-300 hover:shadow-lg hover:-translate-y-1 dark:hover:shadow-primary/20">
+      <CardHeader className="relative pb-4">
+        <div className="absolute right-4 top-4 flex gap-2 opacity-0 transition-opacity group-hover:opacity-100">
+          {onEdit && (
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => onEdit(song)}
+              className="h-8 w-8 hover:bg-primary/10"
+            >
+              <Pencil className="h-4 w-4" />
+              <span className="sr-only">Edit song</span>
+            </Button>
+          )}
+          {onDelete && (
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => onDelete(song)}
+              className="h-8 w-8 text-destructive hover:bg-destructive/10"
+            >
+              <Trash2 className="h-4 w-4" />
+              <span className="sr-only">Delete song</span>
+            </Button>
+          )}
+        </div>
+        <div className="flex items-center gap-3">
+          <div className="rounded-full bg-primary/10 p-2">
+            <Music2 className="h-4 w-4 text-primary" />
+          </div>
+          <div>
+            <CardTitle className="line-clamp-1">{song.title}</CardTitle>
+            <CardDescription>Song chords</CardDescription>
+          </div>
+        </div>
       </CardHeader>
-      <CardContent className="p-4 sm:p-6">
-        {song.chords && song.chords.trim() !== "" ? ( 
-          <pre className="font-mono text-base sm:text-lg whitespace-pre-wrap break-words leading-relaxed text-foreground bg-background p-3 sm:p-4 rounded-md shadow-inner">
-            {song.chords.trim()}
-          </pre>
-        ) : (
-          <p className="text-center text-muted-foreground italic">No chords defined for this song.</p>
-        )}
+      <CardContent>
+        <pre className="max-h-[200px] overflow-y-auto rounded-md bg-muted p-4 font-mono text-sm">
+          {song.chords || "No chords added yet"}
+        </pre>
       </CardContent>
     </Card>
-  );
+  )
 }

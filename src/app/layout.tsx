@@ -1,45 +1,41 @@
-import type { Metadata, Viewport } from 'next';
-import { Geist, Geist_Mono } from 'next/font/google';
-import './globals.css';
-import { Toaster } from "@/components/ui/toaster";
+import type { Metadata } from "next"
+import * as React from "react"
+import { Inter } from "next/font/google"
+import "./globals.css"
+import { ThemeProvider } from "@/components/theme-provider"
+import { Toaster } from "@/components/ui/toaster"
 
-const geistSans = Geist({
-  variable: '--font-geist-sans',
-  subsets: ['latin'],
-});
-
-const geistMono = Geist_Mono({
-  variable: '--font-geist-mono',
-  subsets: ['latin'],
-});
+const inter = Inter({ subsets: ["latin"] })
 
 export const metadata: Metadata = {
-  title: 'ChordFlash',
-  description: 'Your personal song chord flashcards app. Displays song chords for musicians, designed for live performances and rehearsals.',
-  manifest: '/manifest.json',
+  title: "ChordFlash - Your Personal Song Collection",
+  description: "Manage your song chords and lyrics in one place",
   icons: {
-    apple: '/icons/apple-touch-icon.png', // You'll need to provide these actual icon files
+    icon: "/icons/icon-512x512.png",
+    apple: "/icons/apple-touch-icon.png",
   },
-};
-
-export const viewport: Viewport = {
-  themeColor: '#E67700',
-  initialScale: 1,
-  width: 'device-width',
-  userScalable: true,
-};
+}
 
 export default function RootLayout({
   children,
 }: Readonly<{
-  children: React.ReactNode;
+  children: React.ReactNode
 }>) {
   return (
-    <html lang="en">
-      <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
-        {children}
-        <Toaster />
+    <html lang="en" suppressHydrationWarning>
+      <body className={inter.className}>
+        <ThemeProvider
+          attribute="class"
+          defaultTheme="system"
+          enableSystem
+          disableTransitionOnChange
+        >
+          <main className="min-h-screen bg-background text-foreground antialiased transition-colors">
+            {children}
+          </main>
+          <Toaster />
+        </ThemeProvider>
       </body>
     </html>
-  );
+  )
 }
