@@ -1,0 +1,54 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 0 0% 13%; /* #222222 */
+    --foreground: 28 100% 45%; /* #E67700 */
+
+    --muted: 0 0% 20%;
+    --muted-foreground: 0 0% 70%; /* Lighter muted foreground for better contrast */
+
+    --popover: 0 0% 10%;
+    --popover-foreground: 28 100% 45%;
+
+    --card: 0 0% 18%; /* #2E2E2E - Slightly lighter than background */
+    --card-foreground: 28 100% 45%;
+
+    --border: 28 100% 35%; /* Darker orange for borders */
+    --input: 0 0% 20%; /* Darker input background */
+
+    --primary: 45 100% 45%; /* #E6B800 - Yellow for buttons */
+    --primary-foreground: 0 0% 10%; /* Dark text for yellow buttons */
+
+    --secondary: 0 0% 25%;
+    --secondary-foreground: 45 100% 45%; /* Yellow text on secondary buttons */
+
+    --accent: 45 100% 50%; /* Lighter yellow for hover/active states */
+    --accent-foreground: 0 0% 10%;
+
+    --destructive: 0 70% 50%;
+    --destructive-foreground: 0 0% 100%;
+
+    --ring: 45 100% 55%; /* Lighter yellow for focus rings */
+    --radius: 0.8rem; /* More rounded borders */
+
+    /* Chart colors (default, can be ignored if no charts) */
+    --chart-1: 12 76% 61%;
+    --chart-2: 173 58% 39%;
+    --chart-3: 197 37% 24%;
+    --chart-4: 43 74% 66%;
+    --chart-5: 27 87% 67%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+    font-family: var(--font-geist-sans);
+  }
+}
