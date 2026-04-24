@@ -4,6 +4,7 @@ import { Inter } from "next/font/google"
 import "./globals.css"
 import { ThemeProvider } from "@/components/theme-provider"
 import { Toaster } from "@/components/ui/toaster"
+import { Navigation } from "@/components/Navigation"
 
 const inter = Inter({ subsets: ["latin"] })
 
@@ -30,9 +31,10 @@ export default function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
-          <main className="min-h-screen bg-background text-foreground antialiased transition-colors">
+          <main className="mx-auto min-h-screen max-w-lg bg-background text-foreground antialiased transition-colors">
             {children}
           </main>
+          <Navigation />
           <Toaster />
         </ThemeProvider>
       </body>

@@ -1,58 +1,60 @@
 "use client";
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect } from 'react';
 import type { Song } from '@/types';
-import { db } from "@/lib/firebaseConfig"; // Import db from firebaseConfig
-import { collection, onSnapshot, query, orderBy, CollectionReference } from "firebase/firestore"; // Import Firestore functions
-
+import { db } from '@/lib/firebaseConfig';
+import {
+  collection, onSnapshot, query, orderBy,
+  addDoc, updateDoc, deleteDoc, doc, serverTimestamp,
+} from 'firebase/firestore';
 
 export function useSongs() {
   const [songs, setSongs] = useState<Song[]>([]);
-  const [loading, setLoading] = useState(true); // Add a loading state
-  const [error, setError] = useState<Error | null>(null); // Add an error state
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<Error | null>(null);
 
   useEffect(() => {
     setLoading(true);
-    const songsCollection = collection(db, "songs") as CollectionReference<Song>; // Specify type for better type safety
-    // Create a query to order songs by title (optional, adjust as needed)
-    const q = query(songsCollection, orderBy("title"));
+    const q = query(collection(db, 'songs'), orderBy('title'));
 
     const unsubscribe = onSnapshot(q, (snapshot) => {
-      const songsData = snapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data(),
-      }));
-      setSongs(songsData);
+      const data = snapshot.docs.map(d => ({ id: d.id, ...d.data() } as Song));
+      setSongs(data);
       setLoading(false);
     }, (err) => {
-      console.error("Error fetching songs from Firestore:", err);
+      console.error('Error fetching songs:', err);
       setError(err);
       setLoading(false);
     });
 
-    // Clean up the listener when the component unmounts
-    return () => unsubscribe();
-  }, []); // Empty dependency array means this effect runs once on mount
+    return unsubscribe;
+  }, []);
 
-  const addSong = useCallback((newSongData: Omit<Song, 'id'>) => {
-    setSongs(prevSongs => {
-      const newSong: Song = { ...newSongData, id: crypto.randomUUID() };
-      return [...prevSongs, newSong];
+  async function addSong(data: Omit<Song, 'id'>) {
+    await addDoc(collection(db, 'songs'), {
+      ...data,
+      createdAt: serverTimestamp(),
     });
-  }, []);
-  const updateSong = useCallback((updatedSong: Song) => {
-    setSongs(prevSongs =>
-      prevSongs.map(song => (song.id === updatedSong.id ? updatedSong : song))
-    );
-  }, []);
-  const deleteSong = useCallback((songId: string) => {
-    setSongs(prevSongs => prevSongs.filter(song => song.id !== songId));
-  }, []);
+  }
 
-  const getSongById = useCallback((songId: string): Song | undefined => {
-    return songs.find(song => song.id === songId);
-  }, [songs]);
+  async function updateSong(id: string, data: Partial<Omit<Song, 'id'>>) {
+    await updateDoc(doc(db, 'songs', id), {
+      ...data,
+      updatedAt: serverTimestamp(),
+    });
+  }
 
-  // Return songs, loading state, and error state
-  return { songs, loading, error, getSongById };
+  async function deleteSong(id: string) {
+    await deleteDoc(doc(db, 'songs', id));
+  }
+
+  function getSongById(id: string) {
+    return songs.find(s => s.id === id);
+  }
+
+  function getSongsByGroup(groupId: string) {
+    return songs.filter(s => s.groupIds?.includes(groupId));
+  }
+
+  return { songs, loading, error, addSong, updateSong, deleteSong, getSongById, getSongsByGroup };
 }
