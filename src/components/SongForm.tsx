@@ -38,6 +38,7 @@ function uid() { return Math.random().toString(36).slice(2); }
 
 export default function SongForm({ isOpen, onClose, initialData, groups, onSubmit }: SongFormProps) {
   const [title, setTitle] = useState('');
+  const [artist, setArtist] = useState('');
   const [key, setKey] = useState('Am');
   const [bpm, setBpm] = useState('');
   const [sections, setSections] = useState<SongSection[]>([]);
@@ -52,6 +53,7 @@ export default function SongForm({ isOpen, onClose, initialData, groups, onSubmi
   useEffect(() => {
     if (isOpen) {
       setTitle(initialData?.title ?? '');
+      setArtist(initialData?.artist ?? '');
       setKey(initialData?.key ?? 'Am');
       setBpm(initialData?.bpm?.toString() ?? '');
       setSections(initialData?.sections ?? []);
@@ -90,6 +92,7 @@ export default function SongForm({ isOpen, onClose, initialData, groups, onSubmi
     try {
       await onSubmit({
         title: title.trim(),
+        artist: artist.trim() || undefined,
         key,
         bpm: bpm ? parseInt(bpm) : undefined,
         sections,
@@ -117,12 +120,25 @@ export default function SongForm({ isOpen, onClose, initialData, groups, onSubmi
             {/* Título */}
             <div>
               <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                Título
+                Nombre de la canción
               </label>
               <Input
                 value={title}
                 onChange={e => setTitle(e.target.value)}
                 placeholder="Nombre de la canción..."
+                className="focus-visible:ring-primary"
+              />
+            </div>
+
+            {/* Artista */}
+            <div>
+              <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                Artista <span className="normal-case font-normal text-muted-foreground/60">(opcional)</span>
+              </label>
+              <Input
+                value={artist}
+                onChange={e => setArtist(e.target.value)}
+                placeholder="Nombre del artista o banda..."
                 className="focus-visible:ring-primary"
               />
             </div>
