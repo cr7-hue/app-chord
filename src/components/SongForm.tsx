@@ -96,9 +96,11 @@ export default function SongForm({ isOpen, onClose, initialData, groups, onSubmi
         key,
         bpm: bpm ? parseInt(bpm) : undefined,
         sections,
-        groupIds,
+        groupIds: groupIds ?? [],
       });
       onClose();
+    } catch {
+      // el error ya fue notificado por el padre con un toast; el modal se queda abierto
     } finally {
       setSaving(false);
     }

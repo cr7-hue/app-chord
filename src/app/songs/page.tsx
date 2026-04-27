@@ -46,17 +46,19 @@ export default function SongsPage() {
 
   async function handleSubmit(data: Omit<Song, 'id'>) {
     try {
+      const payload = { ...data, groupIds: data.groupIds ?? [] };
       if (editingSong) {
-        await updateSong(editingSong.id, data);
+        await updateSong(editingSong.id, payload);
         toast({ title: 'Canción actualizada' });
       } else {
-        await addSong(data);
+        await addSong(payload);
         toast({ title: 'Canción guardada' });
       }
       setIsFormOpen(false);
       setEditingSong(null);
-    } catch {
+    } catch (err) {
       toast({ title: 'Error al guardar', variant: 'destructive' });
+      throw err;
     }
   }
 
