@@ -46,6 +46,7 @@ export default function StagePage() {
       song={song}
       prevSong={prevSong ?? undefined}
       nextSong={nextSong ?? undefined}
+      setlistIds={setlistIds}
     />
   );
 }

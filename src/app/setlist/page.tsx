@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useGroups } from '@/hooks/useGroups';
 import { useSongs } from '@/hooks/useSongs';
@@ -15,8 +15,26 @@ export default function SetlistPage() {
   const { groups, loading: loadingGroups } = useGroups();
   const { songs, loading: loadingSongs } = useSongs();
 
-  const [selectedGroupId, setSelectedGroupId] = useState<string>('');
-  const [setlistIds, setSetlistIds] = useState<string[]>([]);
+  const [selectedGroupId, setSelectedGroupId] = useState<string>(() => {
+    if (typeof window === 'undefined') return '';
+    return localStorage.getItem('setlist_groupId') ?? '';
+  });
+  const [setlistIds, setSetlistIds] = useState<string[]>(() => {
+    if (typeof window === 'undefined') return [];
+    try {
+      return JSON.parse(localStorage.getItem('setlist_ids') ?? '[]');
+    } catch {
+      return [];
+    }
+  });
+
+  useEffect(() => {
+    localStorage.setItem('setlist_groupId', selectedGroupId);
+  }, [selectedGroupId]);
+
+  useEffect(() => {
+    localStorage.setItem('setlist_ids', JSON.stringify(setlistIds));
+  }, [setlistIds]);
 
   const activeGroupId = selectedGroupId || groups[0]?.id || '';
 
@@ -50,7 +68,6 @@ export default function SetlistPage() {
 
   function changeGroup(id: string) {
     setSelectedGroupId(id);
-    setSetlistIds([]);
   }
 
   if (loadingGroups || loadingSongs) {

@@ -9,13 +9,14 @@ import SongForm from '@/components/SongForm';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel,
   AlertDialogContent, AlertDialogDescription,
   AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import { Search, Plus, Music2 } from 'lucide-react';
+import { Search, Plus, Music2, LayoutList, LayoutGrid, Pencil, Trash2 } from 'lucide-react';
 import type { Song } from '@/types';
 
 export default function SongsPage() {
@@ -28,28 +29,36 @@ export default function SongsPage() {
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingSong, setEditingSong] = useState<Song | null>(null);
   const [songToDelete, setSongToDelete] = useState<Song | null>(null);
+  const [viewMode, setViewMode] = useState<'cards' | 'compact'>('cards');
+  const [selectedGroupId, setSelectedGroupId] = useState<string>('all');
 
   const filtered = useMemo(() =>
-    songs.filter(s =>
-      s.title.toLowerCase().includes(search.toLowerCase()) ||
-      s.key?.toLowerCase().includes(search.toLowerCase())
-    ),
-    [songs, search]
+    songs.filter(s => {
+      const matchesSearch =
+        s.title.toLowerCase().includes(search.toLowerCase()) ||
+        s.key?.toLowerCase().includes(search.toLowerCase());
+      const matchesGroup =
+        selectedGroupId === 'all' || s.groupIds?.includes(selectedGroupId);
+      return matchesSearch && matchesGroup;
+    }),
+    [songs, search, selectedGroupId]
   );
 
   async function handleSubmit(data: Omit<Song, 'id'>) {
     try {
+      const payload = { ...data, groupIds: data.groupIds ?? [] };
       if (editingSong) {
-        await updateSong(editingSong.id, data);
+        await updateSong(editingSong.id, payload);
         toast({ title: 'Canción actualizada' });
       } else {
-        await addSong(data);
+        await addSong(payload);
         toast({ title: 'Canción guardada' });
       }
       setIsFormOpen(false);
       setEditingSong(null);
-    } catch {
+    } catch (err) {
       toast({ title: 'Error al guardar', variant: 'destructive' });
+      throw err;
     }
   }
 
@@ -67,8 +76,31 @@ export default function SongsPage() {
 
   return (
     <div className="min-h-screen pb-24">
-      <header className="px-4 pt-12 pb-4">
-        <h1 className="mb-4 text-xl font-bold">Todas las canciones</h1>
+      <header className="px-4 pt-12 pb-4 space-y-3">
+        <div className="flex items-center justify-between">
+          <h1 className="text-xl font-bold">Todas las canciones</h1>
+          <div className="flex gap-1 rounded-lg border p-1">
+            <Button
+              variant={viewMode === 'cards' ? 'default' : 'ghost'}
+              size="icon"
+              className="h-7 w-7"
+              onClick={() => setViewMode('cards')}
+              title="Vista tarjetas"
+            >
+              <LayoutGrid className="h-4 w-4" />
+            </Button>
+            <Button
+              variant={viewMode === 'compact' ? 'default' : 'ghost'}
+              size="icon"
+              className="h-7 w-7"
+              onClick={() => setViewMode('compact')}
+              title="Vista compacta"
+            >
+              <LayoutList className="h-4 w-4" />
+            </Button>
+          </div>
+        </div>
+
         <div className="relative">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <Input
@@ -78,11 +110,40 @@ export default function SongsPage() {
             className="pl-9"
           />
         </div>
+
+        {groups.length > 0 && (
+          <div className="flex gap-2 overflow-x-auto pb-1 no-scrollbar">
+            <button
+              onClick={() => setSelectedGroupId('all')}
+              className={`shrink-0 rounded-full px-3 py-1 text-xs font-medium border transition-colors ${
+                selectedGroupId === 'all'
+                  ? 'bg-primary text-primary-foreground border-primary'
+                  : 'bg-background text-muted-foreground border-border hover:border-primary/50'
+              }`}
+            >
+              Todos
+            </button>
+            {groups.map(g => (
+              <button
+                key={g.id}
+                onClick={() => setSelectedGroupId(g.id)}
+                className={`shrink-0 rounded-full px-3 py-1 text-xs font-medium border transition-colors ${
+                  selectedGroupId === g.id
+                    ? 'text-white border-transparent'
+                    : 'bg-background text-muted-foreground border-border hover:border-primary/50'
+                }`}
+                style={selectedGroupId === g.id ? { backgroundColor: g.color, borderColor: g.color } : {}}
+              >
+                {g.name}
+              </button>
+            ))}
+          </div>
+        )}
       </header>
 
-      <div className="flex flex-col gap-3 px-4">
+      <div className={viewMode === 'cards' ? 'flex flex-col gap-3 px-4' : 'flex flex-col px-4'}>
         {loading ? (
-          [1, 2, 3].map(i => <Skeleton key={i} className="h-28 rounded-2xl" />)
+          [1, 2, 3].map(i => <Skeleton key={i} className={viewMode === 'cards' ? 'h-28 rounded-2xl' : 'h-12 rounded-lg mb-1'} />)
         ) : filtered.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-14 text-center">
             <Music2 className="mb-3 h-9 w-9 text-muted-foreground/30" />
@@ -90,7 +151,7 @@ export default function SongsPage() {
               {search ? 'Sin resultados' : 'Sin canciones aún'}
             </p>
           </div>
-        ) : (
+        ) : viewMode === 'cards' ? (
           filtered.map(song => (
             <div
               key={song.id}
@@ -102,6 +163,43 @@ export default function SongsPage() {
                 onEdit={() => { setEditingSong(song); setIsFormOpen(true); }}
                 onDelete={s => setSongToDelete(s)}
               />
+            </div>
+          ))
+        ) : (
+          filtered.map((song, index) => (
+            <div
+              key={song.id}
+              className={`flex items-center gap-3 px-3 py-2.5 cursor-pointer hover:bg-muted/60 transition-colors ${
+                index !== filtered.length - 1 ? 'border-b border-border/50' : ''
+              }`}
+              onClick={() => router.push(`/stage/${song.id}`)}
+            >
+              <span className="w-5 text-xs text-muted-foreground/50 text-right shrink-0">
+                {index + 1}
+              </span>
+              <p className="flex-1 truncate text-sm font-medium">{song.title}</p>
+              <Badge variant="outline" className="shrink-0 text-xs font-bold text-primary border-primary/40 bg-primary/5">
+                {song.key}
+              </Badge>
+              {song.bpm && (
+                <span className="shrink-0 text-xs text-muted-foreground hidden sm:block">{song.bpm} BPM</span>
+              )}
+              <div className="flex gap-1 shrink-0" onClick={e => e.stopPropagation()}>
+                <Button
+                  variant="ghost" size="icon"
+                  className="h-7 w-7 hover:bg-primary/10"
+                  onClick={() => { setEditingSong(song); setIsFormOpen(true); }}
+                >
+                  <Pencil className="h-3.5 w-3.5" />
+                </Button>
+                <Button
+                  variant="ghost" size="icon"
+                  className="h-7 w-7 text-destructive hover:bg-destructive/10"
+                  onClick={() => setSongToDelete(song)}
+                >
+                  <Trash2 className="h-3.5 w-3.5" />
+                </Button>
+              </div>
             </div>
           ))
         )}

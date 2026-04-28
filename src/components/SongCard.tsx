@@ -16,12 +16,12 @@ export default function SongCard({ song, onEdit, onDelete }: SongCardProps) {
       <CardHeader className="relative pb-3">
         <div className="absolute right-3 top-3 flex gap-1 opacity-0 transition-opacity group-hover:opacity-100">
           {onEdit && (
-            <Button variant="ghost" size="icon" onClick={() => onEdit(song)} className="h-7 w-7 hover:bg-primary/10">
+            <Button variant="ghost" size="icon" onClick={e => { e.stopPropagation(); onEdit(song); }} className="h-7 w-7 hover:bg-primary/10">
               <Pencil className="h-3.5 w-3.5" />
             </Button>
           )}
           {onDelete && (
-            <Button variant="ghost" size="icon" onClick={() => onDelete(song)} className="h-7 w-7 text-destructive hover:bg-destructive/10">
+            <Button variant="ghost" size="icon" onClick={e => { e.stopPropagation(); onDelete(song); }} className="h-7 w-7 text-destructive hover:bg-destructive/10">
               <Trash2 className="h-3.5 w-3.5" />
             </Button>
           )}
@@ -33,6 +33,9 @@ export default function SongCard({ song, onEdit, onDelete }: SongCardProps) {
           </div>
           <div className="flex-1 min-w-0">
             <CardTitle className="line-clamp-1 text-base">{song.title}</CardTitle>
+            {song.artist && (
+              <p className="text-xs text-muted-foreground mt-0.5 line-clamp-1">{song.artist}</p>
+            )}
             <div className="flex items-center gap-2 mt-1.5">
               <Badge variant="outline" className="text-xs font-bold text-primary border-primary/40 bg-primary/5">
                 {song.key}
