@@ -30,8 +30,13 @@ export function SongAnalysis({ song }: SongAnalysisProps) {
       const sections = (song.sections ?? []).map(s => ({ type: s.type, chords: s.chords }));
       const data = await analyzeSong(song.title, song.key, sections);
       setResult(data);
-    } catch {
-      setError('No se pudo conectar con la IA. Verificá tu clave de API en .env.local');
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      const isQuota = msg.includes('quota') || msg.includes('Quota') || msg.includes('RESOURCE_EXHAUSTED');
+      setError(isQuota
+        ? 'Límite de solicitudes alcanzado. Esperá 1 minuto e intentá de nuevo.'
+        : `Error IA: ${msg}`
+      );
     } finally {
       setLoading(false);
     }
