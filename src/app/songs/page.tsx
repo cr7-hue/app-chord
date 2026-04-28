@@ -76,27 +76,27 @@ export default function SongsPage() {
 
   return (
     <div className="min-h-screen pb-24">
-      <header className="px-4 pt-12 pb-4 space-y-3">
+      <header className="sticky top-0 z-10 bg-background/90 backdrop-blur-md border-b border-border/40 px-4 pt-12 pb-4 space-y-3">
         <div className="flex items-center justify-between">
-          <h1 className="text-xl font-bold">Todas las canciones</h1>
-          <div className="flex gap-1 rounded-lg border p-1">
+          <h1 className="text-xl font-bold">Canciones</h1>
+          <div className="flex gap-0.5 rounded-xl border border-border/60 bg-muted/50 p-1">
             <Button
               variant={viewMode === 'cards' ? 'default' : 'ghost'}
               size="icon"
-              className="h-7 w-7"
+              className="h-7 w-7 rounded-lg"
               onClick={() => setViewMode('cards')}
               title="Vista tarjetas"
             >
-              <LayoutGrid className="h-4 w-4" />
+              <LayoutGrid className="h-3.5 w-3.5" />
             </Button>
             <Button
               variant={viewMode === 'compact' ? 'default' : 'ghost'}
               size="icon"
-              className="h-7 w-7"
+              className="h-7 w-7 rounded-lg"
               onClick={() => setViewMode('compact')}
               title="Vista compacta"
             >
-              <LayoutList className="h-4 w-4" />
+              <LayoutList className="h-3.5 w-3.5" />
             </Button>
           </div>
         </div>
@@ -107,18 +107,18 @@ export default function SongsPage() {
             value={search}
             onChange={e => setSearch(e.target.value)}
             placeholder="Buscar por título o tonalidad..."
-            className="pl-9"
+            className="pl-9 rounded-xl bg-muted/50 border-border/50 focus-visible:bg-background"
           />
         </div>
 
         {groups.length > 0 && (
-          <div className="flex gap-2 overflow-x-auto pb-1 no-scrollbar">
+          <div className="flex gap-1.5 overflow-x-auto pb-1 no-scrollbar">
             <button
               onClick={() => setSelectedGroupId('all')}
-              className={`shrink-0 rounded-full px-3 py-1 text-xs font-medium border transition-colors ${
+              className={`shrink-0 rounded-full px-3.5 py-1.5 text-xs font-semibold border transition-all ${
                 selectedGroupId === 'all'
-                  ? 'bg-primary text-primary-foreground border-primary'
-                  : 'bg-background text-muted-foreground border-border hover:border-primary/50'
+                  ? 'bg-primary text-primary-foreground border-primary shadow-sm shadow-primary/20'
+                  : 'bg-muted/60 text-muted-foreground border-transparent hover:border-border'
               }`}
             >
               Todos
@@ -127,12 +127,12 @@ export default function SongsPage() {
               <button
                 key={g.id}
                 onClick={() => setSelectedGroupId(g.id)}
-                className={`shrink-0 rounded-full px-3 py-1 text-xs font-medium border transition-colors ${
+                className={`shrink-0 rounded-full px-3.5 py-1.5 text-xs font-semibold border transition-all ${
                   selectedGroupId === g.id
-                    ? 'text-white border-transparent'
-                    : 'bg-background text-muted-foreground border-border hover:border-primary/50'
+                    ? 'text-white border-transparent shadow-sm'
+                    : 'bg-muted/60 text-muted-foreground border-transparent hover:border-border'
                 }`}
-                style={selectedGroupId === g.id ? { backgroundColor: g.color, borderColor: g.color } : {}}
+                style={selectedGroupId === g.id ? { backgroundColor: g.color } : {}}
               >
                 {g.name}
               </button>
@@ -169,32 +169,34 @@ export default function SongsPage() {
           filtered.map((song, index) => (
             <div
               key={song.id}
-              className={`flex items-center gap-3 px-3 py-2.5 cursor-pointer hover:bg-muted/60 transition-colors ${
-                index !== filtered.length - 1 ? 'border-b border-border/50' : ''
-              }`}
+              className={`flex items-center gap-3 px-3 py-3 cursor-pointer transition-colors rounded-xl mx-1 ${
+                index % 2 === 0 ? 'bg-muted/30' : ''
+              } hover:bg-primary/5 active:bg-primary/10`}
               onClick={() => router.push(`/stage/${song.id}`)}
             >
-              <span className="w-5 text-xs text-muted-foreground/50 text-right shrink-0">
+              <span className="w-5 text-xs font-bold text-muted-foreground/40 text-right shrink-0">
                 {index + 1}
               </span>
-              <p className="flex-1 truncate text-sm font-medium">{song.title}</p>
-              <Badge variant="outline" className="shrink-0 text-xs font-bold text-primary border-primary/40 bg-primary/5">
+              <div className="flex-1 min-w-0">
+                <p className="truncate text-sm font-semibold">{song.title}</p>
+                {song.artist && (
+                  <p className="truncate text-xs text-muted-foreground">{song.artist}</p>
+                )}
+              </div>
+              <span className="shrink-0 rounded-lg bg-primary/10 px-2 py-0.5 text-xs font-extrabold text-primary border border-primary/15">
                 {song.key}
-              </Badge>
-              {song.bpm && (
-                <span className="shrink-0 text-xs text-muted-foreground hidden sm:block">{song.bpm} BPM</span>
-              )}
+              </span>
               <div className="flex gap-1 shrink-0" onClick={e => e.stopPropagation()}>
                 <Button
                   variant="ghost" size="icon"
-                  className="h-7 w-7 hover:bg-primary/10"
+                  className="h-8 w-8 rounded-xl hover:bg-primary/10"
                   onClick={() => { setEditingSong(song); setIsFormOpen(true); }}
                 >
                   <Pencil className="h-3.5 w-3.5" />
                 </Button>
                 <Button
                   variant="ghost" size="icon"
-                  className="h-7 w-7 text-destructive hover:bg-destructive/10"
+                  className="h-8 w-8 rounded-xl text-destructive hover:bg-destructive/10"
                   onClick={() => setSongToDelete(song)}
                 >
                   <Trash2 className="h-3.5 w-3.5" />
