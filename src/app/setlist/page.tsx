@@ -68,7 +68,6 @@ export default function SetlistPage() {
 
   function changeGroup(id: string) {
     setSelectedGroupId(id);
-    setSetlistIds([]);
   }
 
   if (loadingGroups || loadingSongs) {

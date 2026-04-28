@@ -21,11 +21,14 @@ interface StageViewProps {
   song: Song;
   prevSong?: Song;
   nextSong?: Song;
+  setlistIds?: string[];
 }
 
-export function StageView({ song, prevSong, nextSong }: StageViewProps) {
+export function StageView({ song, prevSong, nextSong, setlistIds = [] }: StageViewProps) {
   const [activeSection, setActiveSection] = useState<string | null>(null);
   const router = useRouter();
+
+  const listParam = setlistIds.length > 0 ? `?list=${setlistIds.join(',')}` : '';
 
   function goBack() { router.back(); }
 
@@ -90,7 +93,7 @@ export function StageView({ song, prevSong, nextSong }: StageViewProps) {
       {/* Prev / Next navigation */}
       <div className="fixed bottom-0 left-0 right-0 flex items-center gap-3 border-t border-zinc-900 bg-black/97 px-4 py-3">
         <button
-          onClick={() => prevSong && router.push(`/stage/${prevSong.id}`)}
+          onClick={() => prevSong && router.push(`/stage/${prevSong.id}${listParam}`)}
           disabled={!prevSong}
           className={`flex flex-1 items-center justify-center gap-1.5 rounded-xl py-3 text-sm font-medium transition-colors ${
             prevSong
@@ -107,7 +110,7 @@ export function StageView({ song, prevSong, nextSong }: StageViewProps) {
         <div className="h-6 w-px bg-zinc-900" />
 
         <button
-          onClick={() => nextSong && router.push(`/stage/${nextSong.id}`)}
+          onClick={() => nextSong && router.push(`/stage/${nextSong.id}${listParam}`)}
           disabled={!nextSong}
           className={`flex flex-1 items-center justify-center gap-1.5 rounded-xl py-3 text-sm font-medium transition-colors ${
             nextSong
