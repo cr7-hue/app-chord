@@ -4,6 +4,7 @@ import { useState } from 'react';
 import type { Song } from '@/types';
 import { ChevronLeft, ChevronRight, X, RefreshCw } from 'lucide-react';
 import { useRouter } from 'next/navigation';
+import { SongAnalysis } from './SongAnalysis';
 
 const SEC_COLORS: Record<string, string> = {
   'Introducción': 'text-cyan-400',
@@ -53,7 +54,7 @@ export function StageView({ song, prevSong, nextSong, setlistIds = [] }: StageVi
             )}
           </div>
         </div>
-        <div className="w-8" />
+        <SongAnalysis song={song} />
       </div>
 
       {/* Sections */}
