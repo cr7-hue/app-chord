@@ -13,12 +13,11 @@ const tabs = [
 export function Navigation() {
   const pathname = usePathname();
 
-  // No mostrar nav en modo escenario
   if (pathname.startsWith('/stage')) return null;
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-50 border-t border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80">
-      <div className="mx-auto flex max-w-lg">
+    <nav className="fixed bottom-0 left-0 right-0 z-50 bg-background/90 backdrop-blur-md border-t border-border/60">
+      <div className="mx-auto flex max-w-lg px-2 pb-safe">
         {tabs.map(({ href, icon: Icon, label }) => {
           const isActive = href === '/'
             ? pathname === '/'
@@ -28,17 +27,18 @@ export function Navigation() {
             <Link
               key={href}
               href={href}
-              className={`flex flex-1 flex-col items-center gap-1 py-3 text-xs transition-colors ${
-                isActive
-                  ? 'text-primary'
-                  : 'text-muted-foreground hover:text-foreground'
-              }`}
+              className="flex flex-1 flex-col items-center gap-1 py-2 pt-3"
             >
-              <Icon
-                size={20}
-                strokeWidth={isActive ? 2.5 : 1.8}
-              />
-              {label}
+              <div className={`flex flex-col items-center gap-1 rounded-2xl px-5 py-1.5 transition-all duration-200 ${
+                isActive
+                  ? 'bg-primary/12 text-primary'
+                  : 'text-muted-foreground hover:text-foreground'
+              }`}>
+                <Icon size={22} strokeWidth={isActive ? 2.5 : 1.8} />
+                <span className={`text-[10px] font-semibold tracking-wide ${isActive ? 'text-primary' : ''}`}>
+                  {label}
+                </span>
+              </div>
             </Link>
           );
         })}

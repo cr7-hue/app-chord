@@ -36,17 +36,20 @@ export function StageView({ song, prevSong, nextSong, setlistIds = [] }: StageVi
   return (
     <div className="flex min-h-screen flex-col bg-black text-white">
       {/* Top bar */}
-      <div className="sticky top-0 z-10 flex items-center justify-between bg-black/95 px-4 pb-4 pt-10">
+      <div className="sticky top-0 z-10 flex items-center justify-between bg-black/95 backdrop-blur-sm px-4 pb-3 pt-10">
         <button
           onClick={goBack}
-          className="p-2 -ml-1 text-zinc-600 transition-colors hover:text-white active:text-white"
+          className="flex h-9 w-9 items-center justify-center rounded-full bg-zinc-900 text-zinc-400 transition-colors hover:text-white active:bg-zinc-800"
         >
-          <X size={22} />
+          <X size={18} />
         </button>
-        <div className="flex flex-col items-center gap-1">
-          <span className="font-bold text-lg leading-tight">{song.title}</span>
+        <div className="flex flex-col items-center gap-1.5">
+          <span className="font-bold text-base leading-tight">{song.title}</span>
+          {song.artist && (
+            <span className="text-xs text-zinc-500">{song.artist}</span>
+          )}
           <div className="flex items-center gap-2">
-            <span className="rounded px-2 py-0.5 text-xs font-bold bg-orange-950/60 text-orange-400 border border-orange-900/60">
+            <span className="rounded-lg px-2.5 py-0.5 text-xs font-extrabold bg-orange-500/20 text-orange-400 border border-orange-500/30">
               {song.key}
             </span>
             {song.bpm && (
@@ -67,10 +70,10 @@ export function StageView({ song, prevSong, nextSong, setlistIds = [] }: StageVi
             <button
               key={sec.id}
               onClick={() => setActiveSection(isActive ? null : sec.id)}
-              className={`w-full rounded-2xl border p-4 text-left transition-all ${
+              className={`w-full rounded-2xl border p-4 text-left transition-all duration-150 ${
                 isActive
-                  ? 'border-orange-500/60 bg-orange-950/20'
-                  : 'border-zinc-900 bg-zinc-950/80 active:border-zinc-800'
+                  ? 'border-orange-500/50 bg-orange-500/10 shadow-lg shadow-orange-500/10'
+                  : 'border-zinc-800/80 bg-zinc-950 active:border-zinc-700 active:bg-zinc-900/50'
               }`}
             >
               <div className="mb-3 flex items-center gap-2.5">
@@ -83,7 +86,7 @@ export function StageView({ song, prevSong, nextSong, setlistIds = [] }: StageVi
                   </span>
                 )}
               </div>
-              <pre className="font-mono text-2xl font-bold leading-snug text-white whitespace-pre-wrap md:text-3xl">
+              <pre className="font-mono text-3xl font-extrabold leading-snug text-white whitespace-pre-wrap md:text-4xl">
                 {sec.chords}
               </pre>
             </button>
@@ -92,37 +95,35 @@ export function StageView({ song, prevSong, nextSong, setlistIds = [] }: StageVi
       </div>
 
       {/* Prev / Next navigation */}
-      <div className="fixed bottom-0 left-0 right-0 flex items-center gap-3 border-t border-zinc-900 bg-black/97 px-4 py-3">
+      <div className="fixed bottom-0 left-0 right-0 flex items-center gap-2 border-t border-zinc-800/60 bg-black/95 backdrop-blur-sm px-4 py-4">
         <button
           onClick={() => prevSong && router.push(`/stage/${prevSong.id}${listParam}`)}
           disabled={!prevSong}
-          className={`flex flex-1 items-center justify-center gap-1.5 rounded-xl py-3 text-sm font-medium transition-colors ${
+          className={`flex flex-1 items-center justify-center gap-2 rounded-2xl py-3.5 text-sm font-semibold transition-all ${
             prevSong
-              ? 'bg-zinc-900 text-zinc-300 active:bg-zinc-800'
-              : 'cursor-not-allowed bg-transparent text-zinc-800'
+              ? 'bg-zinc-900 text-zinc-200 active:bg-zinc-800 active:scale-[0.97]'
+              : 'cursor-not-allowed bg-zinc-950 text-zinc-800'
           }`}
         >
-          <ChevronLeft size={16} />
-          <span className="max-w-[90px] overflow-hidden text-ellipsis whitespace-nowrap">
-            {prevSong?.title ?? '—'}
+          <ChevronLeft size={18} />
+          <span className="max-w-[100px] overflow-hidden text-ellipsis whitespace-nowrap">
+            {prevSong?.title ?? 'Anterior'}
           </span>
         </button>
-
-        <div className="h-6 w-px bg-zinc-900" />
 
         <button
           onClick={() => nextSong && router.push(`/stage/${nextSong.id}${listParam}`)}
           disabled={!nextSong}
-          className={`flex flex-1 items-center justify-center gap-1.5 rounded-xl py-3 text-sm font-medium transition-colors ${
+          className={`flex flex-1 items-center justify-center gap-2 rounded-2xl py-3.5 text-sm font-semibold transition-all ${
             nextSong
-              ? 'bg-zinc-900 text-zinc-300 active:bg-zinc-800'
-              : 'cursor-not-allowed bg-transparent text-zinc-800'
+              ? 'bg-orange-500/90 text-white active:bg-orange-600 active:scale-[0.97]'
+              : 'cursor-not-allowed bg-zinc-950 text-zinc-800'
           }`}
         >
-          <span className="max-w-[90px] overflow-hidden text-ellipsis whitespace-nowrap">
-            {nextSong?.title ?? '—'}
+          <span className="max-w-[100px] overflow-hidden text-ellipsis whitespace-nowrap">
+            {nextSong?.title ?? 'Siguiente'}
           </span>
-          <ChevronRight size={16} />
+          <ChevronRight size={18} />
         </button>
       </div>
     </div>
