@@ -34,8 +34,8 @@ export const SECTION_TYPES = [
 ] as const;
 
 export const MUSICAL_KEYS = [
-  'Am', 'Bm', 'Cm', 'Dm', 'Em', 'Fm', 'Gm',
-  'A',  'B',  'C',  'D',  'E',  'F',  'G',
+  'Am', 'Bbm/A#m', 'Bm', 'Cm', 'C#m/Dbm', 'Dm', 'Ebm/D#m', 'Em', 'Fm', 'F#m/Gbm', 'Gm', 'Abm/G#m',
+  'A',  'Bb/A#',   'B',  'C',  'C#/Db',   'D',  'Eb/D#',   'E',  'F',  'F#/Gb',   'G',  'Ab/G#',
 ] as const;
 
 export const GROUP_COLORS = [

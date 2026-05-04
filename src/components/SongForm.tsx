@@ -12,7 +12,7 @@ import {
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Badge } from '@/components/ui/badge';
 import {
-  Plus, Trash2, GripVertical, Music2, Hash, Check,
+  Plus, Trash2, GripVertical, Music2, Hash, Check, Pencil,
 } from 'lucide-react';
 
 interface SongFormProps {
@@ -45,6 +45,7 @@ export default function SongForm({ isOpen, onClose, initialData, groups, onSubmi
   const [groupIds, setGroupIds] = useState<string[]>([]);
 
   const [addOpen, setAddOpen] = useState(false);
+  const [editingSection, setEditingSection] = useState<string | null>(null);
   const [newType, setNewType] = useState<string>('Verso');
   const [newChords, setNewChords] = useState('');
   const [newRepeat, setNewRepeat] = useState(1);
@@ -59,6 +60,7 @@ export default function SongForm({ isOpen, onClose, initialData, groups, onSubmi
       setSections(initialData?.sections ?? []);
       setGroupIds(initialData?.groupIds ?? []);
       setAddOpen(false);
+      setEditingSection(null);
       setNewChords('');
       setNewType('Verso');
       setNewRepeat(1);
@@ -67,13 +69,30 @@ export default function SongForm({ isOpen, onClose, initialData, groups, onSubmi
 
   function addSection() {
     if (!newChords.trim()) return;
-    setSections(prev => [
-      ...prev,
-      { id: uid(), type: newType, chords: newChords.trim(), repeat: newRepeat },
-    ]);
+    if (editingSection) {
+      setSections(prev => prev.map(s =>
+        s.id === editingSection
+          ? { ...s, type: newType, chords: newChords.trim(), repeat: newRepeat }
+          : s
+      ));
+      setEditingSection(null);
+    } else {
+      setSections(prev => [
+        ...prev,
+        { id: uid(), type: newType, chords: newChords.trim(), repeat: newRepeat },
+      ]);
+    }
     setNewChords('');
     setNewRepeat(1);
     setAddOpen(false);
+  }
+
+  function startEditSection(sec: SongSection) {
+    setNewType(sec.type);
+    setNewChords(sec.chords);
+    setNewRepeat(sec.repeat);
+    setEditingSection(sec.id);
+    setAddOpen(true);
   }
 
   function removeSection(id: string) {
@@ -214,19 +233,31 @@ export default function SongForm({ isOpen, onClose, initialData, groups, onSubmi
                         {sec.chords}
                       </pre>
                     </div>
-                    <button
-                      type="button"
-                      onClick={() => removeSection(sec.id)}
-                      className="flex-shrink-0 p-1 text-muted-foreground/40 hover:text-destructive transition-colors"
-                    >
-                      <Trash2 className="h-3.5 w-3.5" />
-                    </button>
+                    <div className="flex flex-col gap-1 flex-shrink-0">
+                      <button
+                        type="button"
+                        onClick={() => startEditSection(sec)}
+                        className="p-1 text-muted-foreground/40 hover:text-primary transition-colors"
+                      >
+                        <Pencil className="h-3.5 w-3.5" />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => removeSection(sec.id)}
+                        className="p-1 text-muted-foreground/40 hover:text-destructive transition-colors"
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </button>
+                    </div>
                   </div>
                 ))}
               </div>
 
               {addOpen ? (
                 <div className="rounded-xl border border-primary/20 bg-primary/5 p-4 flex flex-col gap-3">
+                  <p className="text-xs font-semibold uppercase tracking-wider text-primary/70">
+                    {editingSection ? 'Editar sección' : 'Nueva sección'}
+                  </p>
                   {/* Tipo */}
                   <div className="flex flex-wrap gap-1.5">
                     {SECTION_TYPES.map(t => (
@@ -275,11 +306,15 @@ export default function SongForm({ isOpen, onClose, initialData, groups, onSubmi
                   </div>
 
                   <div className="flex gap-2">
-                    <Button variant="outline" size="sm" onClick={() => setAddOpen(false)} className="flex-1">
+                    <Button
+                      variant="outline" size="sm"
+                      onClick={() => { setAddOpen(false); setEditingSection(null); setNewChords(''); setNewType('Verso'); setNewRepeat(1); }}
+                      className="flex-1"
+                    >
                       Cancelar
                     </Button>
                     <Button size="sm" onClick={addSection} className="flex-1">
-                      Agregar
+                      {editingSection ? 'Guardar cambios' : 'Agregar'}
                     </Button>
                   </div>
                 </div>
