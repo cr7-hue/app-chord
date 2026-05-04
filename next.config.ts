@@ -7,7 +7,7 @@ const nextConfig: NextConfig = {
   eslint: {
     ignoreDuringBuilds: true,
   },
-  serverExternalPackages: ['genkit', '@genkit-ai/googleai', '@genkit-ai/next', 'pdf-parse'],
+  serverExternalPackages: ['genkit', '@genkit-ai/googleai', '@genkit-ai/next'],
   images: {
     remotePatterns: [
       {

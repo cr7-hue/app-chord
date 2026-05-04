@@ -1,8 +1,6 @@
 'use server';
 
 import { ai } from './genkit';
-// eslint-disable-next-line @typescript-eslint/no-require-imports
-const pdfParse = require('pdf-parse') as (buffer: Buffer) => Promise<{ text: string }>;
 
 export interface SongAnalysisResult {
   difficulty: 'Básico' | 'Intermedio' | 'Avanzado';
@@ -59,24 +57,27 @@ export async function importChordAiPdf(formData: FormData): Promise<ChordAiImpor
   if (!file) throw new Error('No se recibió ningún archivo');
 
   const buffer = Buffer.from(await file.arrayBuffer());
-  const { text } = await pdfParse(buffer);
+  const base64 = buffer.toString('base64');
 
+  // Gemini 2.5 Flash lee el PDF directamente como entrada multimodal.
+  // No necesitamos ninguna librería de extracción de texto.
   const response = await ai.generate({
-    prompt: `Eres un experto en música. Analiza el texto extraído de un PDF de la app ChordAI.
-
-El PDF de ChordAI tiene formato de grilla donde los acordes aparecen distribuidos en filas (compases) y columnas (tiempos). Los números al inicio de cada fila son números de compás.
-
-Texto extraído del PDF:
----
-${text}
----
+    prompt: [
+      {
+        media: {
+          url: `data:application/pdf;base64,${base64}`,
+          contentType: 'application/pdf',
+        },
+      },
+      {
+        text: `Eres un experto en música. Este PDF fue exportado desde la app ChordAI y contiene los acordes de una canción en formato de grilla/timeline.
 
 Tu tarea:
-1. Extrae el título de la canción, la tonalidad y el BPM del encabezado
+1. Lee el encabezado del PDF y extrae el título de la canción, la tonalidad y el BPM
 2. Lee los acordes compás por compás de izquierda a derecha, ignorando celdas vacías y guiones solitarios
 3. Detecta patrones de acordes que se repiten consecutivamente para identificar secciones musicales
 4. Agrupa en secciones usando SOLO estos tipos en español: Introducción, Verso, Pre-Coro, Coro, Puente, Fuga, Solo, Outro
-5. Para los acordes de cada sección escribe la progresión como "Acorde1 - Acorde2 - Acorde3", usando salto de línea si hay varios compases distintos en la misma sección
+5. Para los acordes de cada sección escribe la progresión como "Acorde1 - Acorde2 - Acorde3", usando salto de línea si hay compases distintos en la misma sección
 
 Responde ÚNICAMENTE con JSON válido sin texto adicional:
 {
@@ -87,6 +88,8 @@ Responde ÚNICAMENTE con JSON válido sin texto adicional:
     { "type": "Introducción", "chords": "Bb - F - Dm - Gm", "repeat": 4 }
   ]
 }`,
+      },
+    ],
   });
 
   const raw = response.text.trim();
