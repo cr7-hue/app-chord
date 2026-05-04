@@ -6,6 +6,7 @@ import { useSongs } from '@/hooks/useSongs';
 import { useGroups } from '@/hooks/useGroups';
 import SongCard from '@/components/SongCard';
 import SongForm from '@/components/SongForm';
+import ImportChordAI from '@/components/ImportChordAI';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -16,7 +17,7 @@ import {
   AlertDialogContent, AlertDialogDescription,
   AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import { Search, Plus, Music2, LayoutList, LayoutGrid, Pencil, Trash2 } from 'lucide-react';
+import { Search, Plus, Music2, LayoutList, LayoutGrid, Pencil, Trash2, FileUp } from 'lucide-react';
 import type { Song } from '@/types';
 
 export default function SongsPage() {
@@ -27,6 +28,7 @@ export default function SongsPage() {
 
   const [search, setSearch] = useState('');
   const [isFormOpen, setIsFormOpen] = useState(false);
+  const [isImportOpen, setIsImportOpen] = useState(false);
   const [editingSong, setEditingSong] = useState<Song | null>(null);
   const [songToDelete, setSongToDelete] = useState<Song | null>(null);
   const [viewMode, setViewMode] = useState<'cards' | 'compact'>('cards');
@@ -207,6 +209,18 @@ export default function SongsPage() {
         )}
       </div>
 
+      {/* FAB importar PDF */}
+      <Button
+        onClick={() => setIsImportOpen(true)}
+        size="icon"
+        variant="outline"
+        className="fixed bottom-40 right-4 h-12 w-12 rounded-full shadow-md border-primary/30 bg-background hover:bg-primary/5"
+        title="Importar desde ChordAI"
+      >
+        <FileUp className="h-5 w-5 text-primary" />
+      </Button>
+
+      {/* FAB agregar canción */}
       <Button
         onClick={() => { setEditingSong(null); setIsFormOpen(true); }}
         size="icon"
@@ -221,6 +235,16 @@ export default function SongsPage() {
         initialData={editingSong}
         groups={groups}
         onSubmit={handleSubmit}
+      />
+
+      <ImportChordAI
+        isOpen={isImportOpen}
+        onClose={() => setIsImportOpen(false)}
+        onSave={async (data) => {
+          await addSong(data);
+          toast({ title: 'Canción importada desde ChordAI' });
+        }}
+        defaultGroupIds={selectedGroupId !== 'all' ? [selectedGroupId] : []}
       />
 
       <AlertDialog open={!!songToDelete} onOpenChange={open => !open && setSongToDelete(null)}>
