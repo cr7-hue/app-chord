@@ -11,8 +11,10 @@ Documentación del proyecto para Claude Code. Lee este archivo antes de tocar cu
 Funcionalidades principales:
 - Gestión de **grupos/repertorios** con colores personalizados
 - Gestión de **canciones** con secciones (Verso, Coro, Puente, etc.), tonalidad y BPM
+- **Edición inline de secciones** — cada sección tiene botón lápiz para editar sin borrar
 - **Vista de escenario** fullscreen con fondo negro optimizada para actuaciones en vivo
 - **Setlist** para organizar canciones en orden para una presentación
+- **Importar PDF de ChordAI** — sube el PDF exportado de ChordAI y Gemini organiza los acordes en secciones automáticamente
 - **Análisis de canciones con IA** (Gemini 2.5 Flash via Genkit)
 - Soporte **light/dark mode**
 - Funciona como **PWA** instalable en móviles
@@ -87,7 +89,8 @@ app-chord/
 │   │   ├── GroupCard.tsx       # Card visual de un grupo/repertorio
 │   │   ├── GroupForm.tsx       # Formulario para crear/editar grupos
 │   │   ├── SongCard.tsx        # Card visual de una canción
-│   │   ├── SongForm.tsx        # Formulario completo de canción con secciones
+│   │   ├── SongForm.tsx        # Formulario completo de canción con secciones (incluye edición inline por sección)
+│   │   ├── ImportChordAI.tsx   # Modal de importación de PDF ChordAI con análisis de Gemini
 │   │   ├── StageView.tsx       # Vista fullscreen para escenario (fondo negro)
 │   │   ├── SongAnalysis.tsx    # Componente de análisis IA
 │   │   ├── Navigation.tsx      # Navbar inferior con tabs
@@ -157,8 +160,10 @@ SECTION_TYPES = [
 ]
 
 MUSICAL_KEYS = [
-  'Am', 'Bm', 'Cm', 'Dm', 'Em', 'Fm', 'Gm',
-  'A', 'B', 'C', 'D', 'E', 'F', 'G'
+  // 12 menores (con enarmónicas aclaradas)
+  'Am', 'Bbm/A#m', 'Bm', 'Cm', 'C#m/Dbm', 'Dm', 'Ebm/D#m', 'Em', 'Fm', 'F#m/Gbm', 'Gm', 'Abm/G#m',
+  // 12 mayores (con enarmónicas aclaradas)
+  'A',  'Bb/A#',   'B',  'C',  'C#/Db',   'D',  'Eb/D#',   'E',  'F',  'F#/Gb',   'G',  'Ab/G#',
 ]
 
 GROUP_COLORS = [
@@ -341,7 +346,35 @@ El sistema usa variables CSS HSL definidas en `src/app/globals.css`. Referenciar
 
 ---
 
-## 10. Reglas para trabajar en este proyecto
+## 10. Funcionalidades de IA implementadas
+
+### Análisis de canción (`analyzeSong`)
+- **Archivo**: `src/ai/actions.ts`
+- **Uso**: Recibe título, tonalidad y secciones → devuelve dificultad, acordes necesarios y consejo
+- **Componente**: `SongAnalysis.tsx`
+
+### Importación de PDF ChordAI (`importChordAiPdf`)
+- **Archivo**: `src/ai/actions.ts`
+- **Uso**: Recibe un `FormData` con el archivo PDF → devuelve título, tonalidad, BPM y secciones detectadas
+- **Flujo**:
+  1. Convierte el PDF a base64
+  2. Lo envía a Gemini 2.5 Flash como entrada **multimodal** (el modelo lee el PDF visualmente)
+  3. Gemini detecta patrones de acordes que se repiten y los agrupa en secciones
+  4. Devuelve JSON con la estructura de la canción
+- **Componente**: `ImportChordAI.tsx` — modal con 3 pasos: subir PDF → cargando → revisar y corregir
+- **Botón de acceso**: FAB secundario (ícono `FileUp`) en `src/app/songs/page.tsx`, encima del botón `+`
+- **Importante**: No usar `pdf-parse` ni ninguna librería de extracción de texto. Gemini 2.5 Flash lee el PDF directamente. `pdf-parse` falla en Vercel porque intenta cargar un archivo de test al inicializarse.
+
+### Edición inline de secciones (`SongForm.tsx`)
+- Cada sección en el formulario tiene un botón lápiz (`Pencil`) además del de eliminar
+- Al tocarlo se abre el panel de edición pre-relleno con los datos de esa sección
+- Estado `editingSection: string | null` controla si se está editando o agregando
+- Función `startEditSection(sec)` pre-rellena `newType`, `newChords`, `newRepeat` y abre el panel
+- El botón del panel dice "Guardar cambios" al editar y "Agregar" al crear
+
+---
+
+## 11. Reglas para trabajar en este proyecto
 
 1. **No modificar archivos en `src/components/ui/`** directamente — son componentes de shadcn/ui. Si necesitas cambiar comportamiento, crea un wrapper.
 2. **Siempre usar `"use client"`** al inicio de componentes que usen hooks o eventos del browser.
