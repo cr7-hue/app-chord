@@ -36,14 +36,19 @@ export default function SongsPage() {
 
   const filtered = useMemo(() =>
     songs.filter(s => {
+      const q = search.toLowerCase();
       const matchesSearch =
-        s.title.toLowerCase().includes(search.toLowerCase()) ||
-        s.key?.toLowerCase().includes(search.toLowerCase());
+        s.title.toLowerCase().includes(q) ||
+        s.key?.toLowerCase().includes(q) ||
+        s.artist?.toLowerCase().includes(q) ||
+        groups
+          .filter(g => s.groupIds?.includes(g.id))
+          .some(g => g.name.toLowerCase().includes(q));
       const matchesGroup =
         selectedGroupId === 'all' || s.groupIds?.includes(selectedGroupId);
       return matchesSearch && matchesGroup;
     }),
-    [songs, search, selectedGroupId]
+    [songs, search, selectedGroupId, groups]
   );
 
   async function handleSubmit(data: Omit<Song, 'id'>) {
@@ -108,7 +113,7 @@ export default function SongsPage() {
           <Input
             value={search}
             onChange={e => setSearch(e.target.value)}
-            placeholder="Buscar por título o tonalidad..."
+            placeholder="Buscar por título, artista, tonalidad o grupo..."
             className="pl-9 rounded-xl bg-muted/50 border-border/50 focus-visible:bg-background"
           />
         </div>
