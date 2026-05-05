@@ -12,10 +12,12 @@ Funcionalidades principales:
 - Gestión de **grupos/repertorios** con colores personalizados
 - Gestión de **canciones** con secciones (Verso, Coro, Puente, etc.), tonalidad y BPM
 - **Edición inline de secciones** — cada sección tiene botón lápiz para editar sin borrar
+- **Editor de compases por sección** — cada sección puede tener un compás (4/4, 3/4, 6/8, etc.) con grilla de casillas para ingresar acordes por tiempo
 - **Vista de escenario** fullscreen con fondo negro optimizada para actuaciones en vivo
 - **Setlist** para organizar canciones en orden para una presentación
 - **Importar PDF de ChordAI** — sube el PDF exportado de ChordAI y Gemini organiza los acordes en secciones automáticamente
 - **Análisis de canciones con IA** (Gemini 2.5 Flash via Genkit)
+- **Búsqueda de canciones** por título, artista, tonalidad y nombre de grupo
 - Soporte **light/dark mode**
 - Funciona como **PWA** instalable en móviles
 
@@ -140,8 +142,10 @@ interface Song {
 interface SongSection {
   id: string;
   type: string;          // Tipo de sección (Verso, Coro, etc.)
-  chords: string;        // Acordes en texto plano
+  chords: string;        // Acordes en texto plano (vacío si usa grilla de compás)
   repeat: number;        // Cantidad de repeticiones (1-4)
+  timeSignature?: string; // Compás opcional: '4/4', '3/4', '6/8', etc.
+  measures?: string[];   // Acordes por compás serializados: ["Bm|Gm|Em|Dm", "Am|F|G|"]
 }
 
 interface Group {
@@ -150,6 +154,8 @@ interface Group {
   color: string;         // Color hexadecimal
 }
 ```
+
+> **Importante sobre `measures`**: se almacena como `string[]` (no `string[][]`) porque Firestore **no soporta arrays anidados**. Cada elemento es un compás serializado con `|` como separador entre acordes. Deserializar con `.split('|')` al renderizar.
 
 ### Constantes importantes
 
@@ -164,6 +170,14 @@ MUSICAL_KEYS = [
   'Am', 'Bbm/A#m', 'Bm', 'Cm', 'C#m/Dbm', 'Dm', 'Ebm/D#m', 'Em', 'Fm', 'F#m/Gbm', 'Gm', 'Abm/G#m',
   // 12 mayores (con enarmónicas aclaradas)
   'A',  'Bb/A#',   'B',  'C',  'C#/Db',   'D',  'Eb/D#',   'E',  'F',  'F#/Gb',   'G',  'Ab/G#',
+]
+
+TIME_SIGNATURES = [
+  { label: '4/4', beats: 4 },
+  { label: '3/4', beats: 3 },
+  { label: '6/8', beats: 6 },
+  { label: '2/4', beats: 2 },
+  { label: '5/4', beats: 5 },
 ]
 
 GROUP_COLORS = [
@@ -192,11 +206,13 @@ firestore/
         ├── artist?: string
         ├── key: string
         ├── bpm?: number
-        ├── sections: SongSection[]
+        ├── sections: SongSection[]   ← cada sección puede tener timeSignature y measures
         ├── groupIds: string[]
         ├── createdAt: timestamp
         └── updatedAt: timestamp
 ```
+
+> **Firestore no soporta arrays anidados (`string[][]`)**. Si se necesita almacenar una estructura de matriz, serializar cada fila como string con separador (ej: `"Bm|Gm|Em|Dm"`) y guardar como `string[]`.
 
 Los hooks `useGroups` y `useSongs` usan `onSnapshot` de Firestore para actualizaciones en tiempo real.
 
@@ -369,8 +385,25 @@ El sistema usa variables CSS HSL definidas en `src/app/globals.css`. Referenciar
 - Cada sección en el formulario tiene un botón lápiz (`Pencil`) además del de eliminar
 - Al tocarlo se abre el panel de edición pre-relleno con los datos de esa sección
 - Estado `editingSection: string | null` controla si se está editando o agregando
-- Función `startEditSection(sec)` pre-rellena `newType`, `newChords`, `newRepeat` y abre el panel
+- Función `startEditSection(sec)` pre-rellena `newType`, `newChords`, `newRepeat`, `newTimeSignature` y `newMeasures` (deserializando `measures` con `.map(m => m.split('|'))`)
 - El botón del panel dice "Guardar cambios" al editar y "Agregar" al crear
+
+### Editor de compases por sección (`SongForm.tsx`)
+- Cada sección puede tener un compás opcional seleccionable con pills: `4/4`, `3/4`, `6/8`, `2/4`, `5/4`
+- Al seleccionar un compás, el `Textarea` se reemplaza por una **grilla de inputs** — una fila por compás, N casillas por fila según los tiempos
+- Estado interno: `newMeasures: string[][]` (para edición en UI)
+- Al guardar la sección se serializa: `newMeasures.map(m => m.join('|'))` → `string[]` (compatible con Firestore)
+- Al cargar una sección para editar se deserializa: `sec.measures.map(m => m.split('|'))` → `string[][]`
+- **Enter** avanza a la siguiente casilla; **Enter en la última casilla** crea un nuevo compás y mueve el foco
+- **Backspace** en la primera casilla vacía de un compás (no el primero) elimina ese compás
+- Helper `getBeats(ts: string): number` devuelve la cantidad de tiempos para un compás dado
+- La grilla usa CSS Grid (`gridTemplateColumns: repeat(N, 1fr)`) para columnas iguales en todos los compases
+- El botón `×` para eliminar compás siempre ocupa espacio (`invisible` cuando hay un solo compás) para mantener alineación
+
+### Búsqueda extendida de canciones (`src/app/songs/page.tsx`)
+- El buscador filtra por **título, artista, tonalidad y nombre de grupo** desde un solo campo
+- La búsqueda por grupo resuelve los `groupIds` de la canción contra el array `groups` cargado
+- `groups` está incluido en las dependencias del `useMemo` del filtro
 
 ---
 
@@ -386,3 +419,4 @@ El sistema usa variables CSS HSL definidas en `src/app/globals.css`. Referenciar
 8. El proyecto está en **español** — mantener los textos de UI en español.
 9. **No agregar dependencias sin necesidad** — revisar si algo ya está disponible (Radix UI, shadcn, Lucide).
 10. Antes de crear un componente nuevo, revisar si ya existe algo similar en `src/components/ui/`.
+11. **Firestore no soporta arrays anidados** — nunca guardar `string[][]` o similar directamente. Serializar como `string[]` con separador (ej: `|`) y deserializar al renderizar.
