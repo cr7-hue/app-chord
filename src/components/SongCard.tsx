@@ -68,16 +68,28 @@ export default function SongCard({ song, onEdit, onDelete }: SongCardProps) {
       {/* Preview de secciones */}
       {song.sections && song.sections.length > 0 && (
         <div className="px-4 pb-4 pt-0 space-y-1.5">
-          {song.sections.slice(0, 2).map(sec => (
-            <div key={sec.id} className="rounded-xl bg-muted/70 px-3 py-2">
-              <span className="text-[10px] font-bold text-primary/60 uppercase tracking-wider">
-                {sec.type}{sec.repeat > 1 ? ` ×${sec.repeat}` : ''}
-              </span>
-              <pre className="mt-0.5 font-mono text-xs text-muted-foreground line-clamp-1 whitespace-pre-wrap">
-                {sec.chords}
-              </pre>
-            </div>
-          ))}
+          {song.sections.slice(0, 2).map(sec => {
+            const previewText = sec.measures
+              ? sec.measures.map(m => m.split('|').filter(Boolean).join(' - ')).join('  /  ')
+              : sec.chords;
+            return (
+              <div key={sec.id} className="rounded-xl bg-muted/70 px-3 py-2">
+                <div className="flex items-center gap-1.5">
+                  <span className="text-[10px] font-bold text-primary/60 uppercase tracking-wider">
+                    {sec.type}{sec.repeat > 1 ? ` ×${sec.repeat}` : ''}
+                  </span>
+                  {sec.timeSignature && (
+                    <span className="text-[9px] font-bold text-muted-foreground/50 border border-border/40 rounded px-1">
+                      {sec.timeSignature}
+                    </span>
+                  )}
+                </div>
+                <pre className="mt-0.5 font-mono text-xs text-muted-foreground line-clamp-1 whitespace-pre-wrap">
+                  {previewText}
+                </pre>
+              </div>
+            );
+          })}
           {song.sections.length > 2 && (
             <p className="text-xs text-muted-foreground pl-1">
               +{song.sections.length - 2} sección{song.sections.length - 2 !== 1 ? 'es' : ''} más

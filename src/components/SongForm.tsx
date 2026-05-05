@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import type { Song, SongSection, Group } from '@/types';
-import { SECTION_TYPES, MUSICAL_KEYS } from '@/types';
+import { SECTION_TYPES, MUSICAL_KEYS, TIME_SIGNATURES } from '@/types';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -12,7 +12,7 @@ import {
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Badge } from '@/components/ui/badge';
 import {
-  Plus, Trash2, GripVertical, Music2, Hash, Check, Pencil,
+  Plus, Trash2, GripVertical, Music2, Hash, Check, Pencil, X,
 } from 'lucide-react';
 
 interface SongFormProps {
@@ -36,6 +36,10 @@ const SEC_COLORS: Record<string, string> = {
 
 function uid() { return Math.random().toString(36).slice(2); }
 
+function getBeats(ts: string): number {
+  return TIME_SIGNATURES.find(t => t.label === ts)?.beats ?? 4;
+}
+
 export default function SongForm({ isOpen, onClose, initialData, groups, onSubmit }: SongFormProps) {
   const [title, setTitle] = useState('');
   const [artist, setArtist] = useState('');
@@ -49,6 +53,8 @@ export default function SongForm({ isOpen, onClose, initialData, groups, onSubmi
   const [newType, setNewType] = useState<string>('Verso');
   const [newChords, setNewChords] = useState('');
   const [newRepeat, setNewRepeat] = useState(1);
+  const [newTimeSignature, setNewTimeSignature] = useState('');
+  const [newMeasures, setNewMeasures] = useState<string[][]>([]);
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
@@ -64,33 +70,121 @@ export default function SongForm({ isOpen, onClose, initialData, groups, onSubmi
       setNewChords('');
       setNewType('Verso');
       setNewRepeat(1);
+      setNewTimeSignature('');
+      setNewMeasures([]);
     }
   }, [isOpen, initialData]);
 
-  function addSection() {
-    if (!newChords.trim()) return;
-    if (editingSection) {
-      setSections(prev => prev.map(s =>
-        s.id === editingSection
-          ? { ...s, type: newType, chords: newChords.trim(), repeat: newRepeat }
-          : s
-      ));
-      setEditingSection(null);
+  function selectTimeSignature(ts: string) {
+    if (newTimeSignature === ts) {
+      setNewTimeSignature('');
+      setNewMeasures([]);
     } else {
-      setSections(prev => [
-        ...prev,
-        { id: uid(), type: newType, chords: newChords.trim(), repeat: newRepeat },
-      ]);
+      const beats = getBeats(ts);
+      setNewTimeSignature(ts);
+      setNewMeasures(prev =>
+        prev.length === 0
+          ? [Array(beats).fill('')]
+          : prev.map(m => {
+              const r = [...m];
+              while (r.length < beats) r.push('');
+              return r.slice(0, beats);
+            })
+      );
     }
-    setNewChords('');
-    setNewRepeat(1);
+  }
+
+  function addMeasure() {
+    const beats = getBeats(newTimeSignature);
+    setNewMeasures(prev => [...prev, Array(beats).fill('')]);
+  }
+
+  function removeMeasure(idx: number) {
+    setNewMeasures(prev => prev.filter((_, i) => i !== idx));
+  }
+
+  function updateChord(mIdx: number, bIdx: number, value: string) {
+    setNewMeasures(prev =>
+      prev.map((m, i) => i === mIdx ? m.map((c, j) => j === bIdx ? value : c) : m)
+    );
+  }
+
+  function handleChordKeyDown(
+    e: React.KeyboardEvent<HTMLInputElement>,
+    mIdx: number,
+    bIdx: number,
+  ) {
+    const beats = getBeats(newTimeSignature);
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      if (bIdx < beats - 1) {
+        document.querySelector<HTMLInputElement>(`[data-mid="${mIdx}"][data-bid="${bIdx + 1}"]`)?.focus();
+      } else {
+        addMeasure();
+        setTimeout(() => {
+          document.querySelector<HTMLInputElement>(`[data-mid="${mIdx + 1}"][data-bid="0"]`)?.focus();
+        }, 0);
+      }
+    }
+    if (e.key === 'Backspace' && newMeasures[mIdx][bIdx] === '' && bIdx === 0 && mIdx > 0) {
+      e.preventDefault();
+      removeMeasure(mIdx);
+      setTimeout(() => {
+        document.querySelector<HTMLInputElement>(`[data-mid="${mIdx - 1}"][data-bid="${beats - 1}"]`)?.focus();
+      }, 0);
+    }
+  }
+
+  function resetSectionForm() {
     setAddOpen(false);
+    setEditingSection(null);
+    setNewChords('');
+    setNewType('Verso');
+    setNewRepeat(1);
+    setNewTimeSignature('');
+    setNewMeasures([]);
+  }
+
+  function addSection() {
+    if (newTimeSignature) {
+      const hasChords = newMeasures.some(m => m.some(c => c.trim()));
+      if (!hasChords) return;
+      const section: SongSection = {
+        id: editingSection ?? uid(),
+        type: newType,
+        chords: '',
+        repeat: newRepeat,
+        timeSignature: newTimeSignature,
+        measures: newMeasures.map(m => m.join('|')),
+      };
+      setSections(prev =>
+        editingSection
+          ? prev.map(s => s.id === editingSection ? section : s)
+          : [...prev, section]
+      );
+    } else {
+      if (!newChords.trim()) return;
+      const section: SongSection = {
+        id: editingSection ?? uid(),
+        type: newType,
+        chords: newChords.trim(),
+        repeat: newRepeat,
+      };
+      setSections(prev =>
+        editingSection
+          ? prev.map(s => s.id === editingSection ? section : s)
+          : [...prev, section]
+      );
+    }
+    resetSectionForm();
   }
 
   function startEditSection(sec: SongSection) {
     setNewType(sec.type);
     setNewChords(sec.chords);
     setNewRepeat(sec.repeat);
+    setNewTimeSignature(sec.timeSignature ?? '');
+    setNewMeasures((sec.measures ?? []).map(m => m.split('|')));
     setEditingSection(sec.id);
     setAddOpen(true);
   }
@@ -218,20 +312,42 @@ export default function SongForm({ isOpen, onClose, initialData, groups, onSubmi
                   >
                     <GripVertical className="mt-0.5 h-4 w-4 flex-shrink-0 text-muted-foreground/40" />
                     <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 mb-1.5">
+                      <div className="flex items-center gap-2 mb-1.5 flex-wrap">
                         <Badge
                           variant="outline"
                           className={`text-xs font-bold ${SEC_COLORS[sec.type] ?? 'bg-zinc-500/10 text-zinc-400'}`}
                         >
                           {sec.type.toUpperCase()}
                         </Badge>
+                        {sec.timeSignature && (
+                          <span className="text-xs font-bold text-muted-foreground border border-border/60 rounded px-1.5 py-0.5">
+                            {sec.timeSignature}
+                          </span>
+                        )}
                         {sec.repeat > 1 && (
                           <span className="text-xs text-muted-foreground">×{sec.repeat}</span>
                         )}
                       </div>
-                      <pre className="font-mono text-sm text-foreground whitespace-pre-wrap leading-relaxed">
-                        {sec.chords}
-                      </pre>
+                      {sec.measures ? (
+                        <div className="flex flex-col gap-1">
+                          {sec.measures.map((measure, i) => (
+                            <div key={i} className="flex gap-1 flex-wrap">
+                              {measure.split('|').map((chord, j) => (
+                                <span
+                                  key={j}
+                                  className="font-mono text-xs rounded bg-muted px-1.5 py-0.5 text-foreground min-w-[2rem] text-center"
+                                >
+                                  {chord || '—'}
+                                </span>
+                              ))}
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <pre className="font-mono text-sm text-foreground whitespace-pre-wrap leading-relaxed">
+                          {sec.chords}
+                        </pre>
+                      )}
                     </div>
                     <div className="flex flex-col gap-1 flex-shrink-0">
                       <button
@@ -258,7 +374,8 @@ export default function SongForm({ isOpen, onClose, initialData, groups, onSubmi
                   <p className="text-xs font-semibold uppercase tracking-wider text-primary/70">
                     {editingSection ? 'Editar sección' : 'Nueva sección'}
                   </p>
-                  {/* Tipo */}
+
+                  {/* Tipo de sección */}
                   <div className="flex flex-wrap gap-1.5">
                     {SECTION_TYPES.map(t => (
                       <button
@@ -276,15 +393,91 @@ export default function SongForm({ isOpen, onClose, initialData, groups, onSubmi
                     ))}
                   </div>
 
-                  {/* Acordes */}
-                  <Textarea
-                    autoFocus
-                    value={newChords}
-                    onChange={e => setNewChords(e.target.value)}
-                    placeholder={'Ej: Am - G - F - E\nAm - F - G'}
-                    rows={3}
-                    className="font-mono text-sm resize-none focus-visible:ring-primary"
-                  />
+                  {/* Compás */}
+                  <div>
+                    <p className="text-xs text-muted-foreground mb-1.5">
+                      Compás <span className="opacity-60">(opcional)</span>
+                    </p>
+                    <div className="flex flex-wrap gap-1.5">
+                      {TIME_SIGNATURES.map(ts => (
+                        <button
+                          key={ts.label}
+                          type="button"
+                          onClick={() => selectTimeSignature(ts.label)}
+                          className={`rounded-lg px-2.5 py-1 text-xs font-bold transition-all ${
+                            newTimeSignature === ts.label
+                              ? 'bg-primary text-primary-foreground'
+                              : 'bg-secondary text-secondary-foreground hover:bg-secondary/80'
+                          }`}
+                        >
+                          {ts.label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Acordes: grilla o texto libre */}
+                  {newTimeSignature ? (
+                    <div className="flex flex-col gap-2">
+                      <p className="text-xs text-muted-foreground">
+                        Acordes por compás —{' '}
+                        <span className="font-semibold text-primary">
+                          {getBeats(newTimeSignature)} tiempos
+                        </span>
+                      </p>
+                      {newMeasures.map((measure, mIdx) => (
+                        <div key={mIdx} className="flex items-center gap-1">
+                          <span className="text-[10px] text-muted-foreground/40 w-3 text-right shrink-0 font-mono">
+                            {mIdx + 1}
+                          </span>
+                          <div
+                            className="grid flex-1 min-w-0 gap-1"
+                            style={{ gridTemplateColumns: `repeat(${measure.length}, 1fr)` }}
+                          >
+                            {measure.map((chord, bIdx) => (
+                              <input
+                                key={bIdx}
+                                value={chord}
+                                onChange={e => updateChord(mIdx, bIdx, e.target.value)}
+                                onKeyDown={e => handleChordKeyDown(e, mIdx, bIdx)}
+                                data-mid={mIdx}
+                                data-bid={bIdx}
+                                placeholder="—"
+                                className="w-full rounded-md border border-border/60 bg-background px-0.5 py-1 text-center font-mono text-sm font-bold placeholder:text-muted-foreground/30 focus:outline-none focus:ring-1 focus:ring-primary"
+                              />
+                            ))}
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => removeMeasure(mIdx)}
+                            className={`shrink-0 p-0.5 transition-colors ${
+                              newMeasures.length > 1
+                                ? 'text-muted-foreground/30 hover:text-destructive'
+                                : 'invisible'
+                            }`}
+                          >
+                            <X className="h-3 w-3" />
+                          </button>
+                        </div>
+                      ))}
+                      <button
+                        type="button"
+                        onClick={addMeasure}
+                        className="flex items-center justify-center gap-1 rounded-lg border border-dashed border-border/60 py-2 text-xs text-muted-foreground hover:border-primary/50 hover:text-primary transition-colors"
+                      >
+                        <Plus className="h-3.5 w-3.5" /> Agregar compás
+                      </button>
+                    </div>
+                  ) : (
+                    <Textarea
+                      autoFocus
+                      value={newChords}
+                      onChange={e => setNewChords(e.target.value)}
+                      placeholder={'Ej: Am - G - F - E\nAm - F - G'}
+                      rows={3}
+                      className="font-mono text-sm resize-none focus-visible:ring-primary"
+                    />
+                  )}
 
                   {/* Repeticiones */}
                   <div className="flex items-center gap-2">
@@ -308,7 +501,7 @@ export default function SongForm({ isOpen, onClose, initialData, groups, onSubmi
                   <div className="flex gap-2">
                     <Button
                       variant="outline" size="sm"
-                      onClick={() => { setAddOpen(false); setEditingSection(null); setNewChords(''); setNewType('Verso'); setNewRepeat(1); }}
+                      onClick={resetSectionForm}
                       className="flex-1"
                     >
                       Cancelar

@@ -3,7 +3,17 @@ export interface SongSection {
   type: string;
   chords: string;
   repeat: number;
+  timeSignature?: string;
+  measures?: string[];
 }
+
+export const TIME_SIGNATURES = [
+  { label: '4/4', beats: 4 },
+  { label: '3/4', beats: 3 },
+  { label: '6/8', beats: 6 },
+  { label: '2/4', beats: 2 },
+  { label: '5/4', beats: 5 },
+] as const;
 
 export interface Song {
   id: string;

@@ -76,19 +76,43 @@ export function StageView({ song, prevSong, nextSong, setlistIds = [] }: StageVi
                   : 'border-zinc-800/80 bg-zinc-950 active:border-zinc-700 active:bg-zinc-900/50'
               }`}
             >
-              <div className="mb-3 flex items-center gap-2.5">
+              <div className="mb-3 flex items-center gap-2.5 flex-wrap">
                 <span className={`text-xs font-extrabold uppercase tracking-widest ${labelColor}`}>
                   {sec.type}
                 </span>
+                {sec.timeSignature && (
+                  <span className="rounded-md bg-zinc-900 border border-zinc-800 px-2 py-0.5 text-xs font-bold text-zinc-400">
+                    {sec.timeSignature}
+                  </span>
+                )}
                 {sec.repeat > 1 && (
                   <span className="flex items-center gap-1 rounded-full bg-zinc-900 px-2 py-0.5 text-xs text-zinc-500">
                     <RefreshCw size={9} /> ×{sec.repeat}
                   </span>
                 )}
               </div>
-              <pre className="font-mono text-3xl font-extrabold leading-snug text-white whitespace-pre-wrap md:text-4xl">
-                {sec.chords}
-              </pre>
+              {sec.measures ? (
+                <div className="flex flex-col gap-3">
+                  {sec.measures.map((measure, i) => (
+                    <div key={i} className="flex items-center flex-wrap gap-1">
+                      {measure.split('|').map((chord, j) => (
+                        <div key={j} className="flex items-center gap-1">
+                          <span className="font-mono text-3xl font-extrabold text-white md:text-4xl min-w-[2.5rem] text-center">
+                            {chord || <span className="text-zinc-700">—</span>}
+                          </span>
+                          {j < measure.length - 1 && (
+                            <span className="text-zinc-700 text-xl font-light select-none">|</span>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <pre className="font-mono text-3xl font-extrabold leading-snug text-white whitespace-pre-wrap md:text-4xl">
+                  {sec.chords}
+                </pre>
+              )}
             </button>
           );
         })}
